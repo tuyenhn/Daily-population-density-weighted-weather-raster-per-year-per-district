@@ -1,0 +1,183 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{indentfirst}
+
+\title{Daily population-density-weighted weather raster per year per district}
+\author{Tuyen Huynh}
+\date{December 2024}
+
+\begin{document}
+
+\maketitle
+
+% \section{Introduction}
+
+\section{Definition and formulas}
+
+\subsection{Closed polygon}
+
+A closed polygon is a sequence of ordered points (vertices) which forms a two-dimensional geometric figure. The geometric shape of a district is considered a closed polygon.
+
+A closed polygon $L$ is defined as:
+\begin{equation*}
+    L = \{(x_1, y_1), (x_2, y_2), ..., (x_n, y_n), (x_1, y_1)\}
+\end{equation*}
+
+where:
+\begin{itemize}
+    \item $(x_i, y_i)$ are coordinates of the $i$-th vertex of the polygon
+    \item $n$ is the number of vertices
+    \item The first and last points are the same, ensuring the polygon is closed
+\end{itemize}
+
+\subsubsection{Interior of a polygon}
+
+Interior of a polygon is the of points that are inside the polygon but not on its edges or vertices. Denoted as:
+
+\begin{equation} \label{eq:interior_poly}
+    \operatorname{Int}(L) = \{x \in \mathbb{R}^2 \mid x \text{ enclosed by edges of } L\}
+\end{equation}
+
+
+\subsubsection{Boundary of a polygon}
+
+Boundary of a polygon is the set of points that form its edges and vertices. Denoted as:
+
+\begin{equation} \label{eq:boundary_poly}
+    \operatorname{Bnd}(L) = \bigcup_{i=1}^{n}{e_i} \in \mathbb{R}^2
+\end{equation}
+
+where ${e_i}$ are the edges of the polygon $L$
+
+\subsubsection{Closure of a polygon}
+
+The closure of a polygon $L$ is the union of its interior and boundary, given (\ref{eq:interior_poly}) and (\ref{eq:boundary_poly}) we can denote this as:
+
+\begin{equation}
+    \operatorname{Closure}(L) = \operatorname{Int}(L) \cup \operatorname{Bnd}(L)
+\end{equation}
+
+A closure represent the complete polygon, i.e. all the points that makes up the polygon.
+
+
+\subsection{What is a raster}
+
+A raster $R$ is defined as a matrix of raster cells $r$ with dimensions $(n_\text{rows}, n_\text{cols})$, a spatial resolution of $(\Delta{x},\Delta{y})$, and an origin point of $(x_\text{min}, y_\text{max})$. $n_\text{rows}$ is a number of rows in the matrix, and $n_\text{cols}$ is a number of cols in the matrix. It is assumed that $\Delta{x} = \Delta{y}$. $R$ is denoted as:
+
+\begin{equation} \label{eq:raster_def}
+    R = \{r_{i,j} \mid i \in [1, n_\text{rows}], j \in [1, n_{\text(cols)}]\}
+\end{equation}
+
+% or $R$ can also be denoted as:
+
+% \begin{equation} \label{eq:raster_def_vect}
+%     R = \{r_{k} \mid k \in [1, n_\text{cells}]\}
+% \end{equation}
+
+% where $n_\text{cells} = n_\text{rows} \cdot n_\text{cols}$ is the number of cells in a raster.
+
+Each raster cell also store a value, e.g. for a weather raster, a cell would store values of temperature or precipitation; for a population density raster, each cell would store a value of population density. Performing summation over a set of raster cells will imply performing summation over the values of the raster cells, denoted as $\sum(R)$.
+
+\subsection{Geometry of a raster}
+
+A raster can be converted into a geometry shape by converting each of its cells into a square. The conversion for each cell is defined as:
+
+\begin{equation} \label{eq:rast2geom}
+    \begin{split}
+        \operatorname{Geom}(r_{i,j}) = \{
+            &(x_{\text{min}}+(j-1)\cdot\Delta{x}, y_{\text{max}}-(i-1)\cdot\Delta{y}),\\
+            &(x_{\text{min}}+j\cdot\Delta{x}, y_{\text{max}}-(i-1)\cdot\Delta{y})\\
+            &(x_{\text{min}}+j\cdot\Delta{x}, y_{\text{max}}-i\cdot\Delta{y})\\
+            &(x_{\text{min}}+(j-1)\cdot\Delta{x}, y_{\text{max}}-i\cdot\Delta{y})\\
+            &(x_{\text{min}}+(j-1)\cdot\Delta{x}, y_{\text{max}}-(i-1)\cdot\Delta{y})
+        \}
+    \end{split}
+\end{equation}
+
+where:
+\begin{itemize}
+    \item \textbf{Top-left}: $(x_{\text{min}}+(j-1)\cdot\Delta{x}, y_{\text{max}}-(i-1)\cdot\Delta{y})$
+    \item \textbf{Top-right}: $(x_{\text{min}}+j\cdot\Delta{x}, y_{\text{max}}-(i-1)\cdot\Delta{y})$
+    \item \textbf{Bottom-right}:$(x_{\text{min}}+j\cdot\Delta{x}, y_{\text{max}}-i\cdot\Delta{y})$
+    \item \textbf{Bottom-left}: $(x_{\text{min}}+(j-1)\cdot\Delta{x}, y_{\text{max}}-i\cdot\Delta{y})$
+\end{itemize}
+
+Given (\ref{eq:raster_def}) and (\ref{eq:rast2geom}), a raster $R$ can then be also converted into a geometry $R^*$ defined as a collection of polygons:
+
+\begin{equation} \label{eq:rast_geom_set}
+    R^* = \{ \operatorname{Geom}(r_{i,j}) : r_{i,j} \in R \}
+\end{equation}
+
+% \subsection{Intersection}
+% Defining how a polygon $L_1$ intersects with polygon $L_2$, i.e. 2 polygons sharing any space together:
+
+% \begin{equation}
+%     I = \{r_{i,j} \in R \mid \operatorname{Geom}(r_{i,j}) \cap S \neq \emptyset\}
+% \end{equation}
+
+\subsection{Coverage}
+
+Defining a filtering function where given a set of polygons $L_2$, select only polygons that are covered (contained) by a polygon $L_1$:
+
+\begin{equation}
+    \operatorname{Cover}(L_1, L_2) = \{
+        \operatorname{Closure}(l) \subset \operatorname{Closure}(L_1) \mid l \in L_2
+    \}
+\end{equation}
+
+Hence, given a set of polygons $R^*$ such as ones from (\ref{eq:rast_geom_set}), we can filter polygons from $R^*$ that are covered by a polygon $L$ with:
+\begin{equation}
+    L' = \{ \operatorname{Cover}(L, r^*) : r^* \in R^* \}
+\end{equation}
+
+
+\subsection{Cropping}
+
+Denote a function that crops a raster $R$ using a polygon $L$, resulting in a set of raster cells that intersect with, and inside, the polygon:
+
+\begin{equation}
+    \operatorname{Crop}(R, L) = \{
+        \operatorname{Inter}(\operatorname{Geom}(r), L)
+        \cup
+        \operatorname{Cover}(L, r)
+        :r \in R
+    \}
+\end{equation}
+
+\section{Aggregation}
+
+For each district $d$, day $t$, and weather variable $W$ from weather raster $R$:
+
+\begin{equation}
+    W_d(t) = \sum_{p=1}^{N_{\operatorname{Inter}(R, L_d)}}\left( 
+        W_p(t) \cdot \frac{\sum(S'_p)}{}
+    \right)
+\end{equation}
+
+where
+
+\begin{equation*}
+    S'_p = \{ \operatorname{Cover}(\operatorname{Geom}(R_p), s^*_{m,n}) : s^*_{m,n} \in S^* \},
+\end{equation*}
+\begin{equation*}
+    S^* = \{\operatorname{Geom}(s) : s \in \operatorname{Crop}(S,L_d)\}
+\end{equation*}
+
+\begin{itemize}
+    \item $S'_p$ is the set of population density raster cells covered by $R_p$
+    \item $S^*$ is the set of polygons of raster cells from a population density raster $S$  (defined as (\ref{eq:rast_geom_set})), cropped by district geometry $L_d$
+    \item $R_p$ is a raster cell from $R$ and $p \in [1, n_\text{cells}]$
+
+\end{itemize}
+
+% \begin{itemize}
+    % \item $P$: Population density raster 
+    % \item $N_{\operatorname{Inter(R, G_d)}}$: Number of weather pixels intersecting with district geometry $L_d$
+    % \item $P_i$: Population density value for weather pixel $i$ (calculated as the sum of population density pixel values covered by district geometry $d$).
+    
+% \end{itemize}
+
+
+\end{document}

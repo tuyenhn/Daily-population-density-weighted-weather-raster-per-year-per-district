@@ -1,0 +1,40 @@
+
+\subsection{Geometry of a raster cell} \label{sect:raster-cell-geom}
+
+We define $\gamma$ as the function that converts a raster cell into the set of points made up its geometry:
+
+\begin{equation*}
+    \begin{split}
+        \gamma(R_i) = \{
+            &(x_{\text{min}}+(j-1)\cdot\Delta, y_{\text{min}}+(k-1)\cdot\Delta),\\
+            &(x_{\text{min}}+j\cdot\Delta, y_{\text{min}}+(k-1)\cdot\Delta)\\
+            &(x_{\text{min}}+j\cdot\Delta, y_{\text{min}}+k\cdot\Delta)\\
+            &(x_{\text{min}}+(j-1)\cdot\Delta, y_{\text{min}}+k\cdot\Delta)\\
+            &(x_{\text{min}}+(j-1)\cdot\Delta, y_{\text{min}}+(k-1)\cdot\Delta)
+        \}
+    \end{split}
+\end{equation*}
+
+where:
+\begin{itemize}
+    \item $j = \lfloor \frac{i-1}{n_\text{cols}} \rfloor + 1$: the $j$-th row of raster matrix for cell $R_i$
+    \item $k = ((i-1) \bmod n_\text{cols}) + 1$: the $k$-th column of raster matrix for cell $R_i$
+    \item $\Delta$ is the resolution of the raster, i.e. the length of the sides of a raster cell
+    \item $(x_\text{min},y_\text{min})$ is the origin point of the raster, the top-left corner
+    \item \textbf{Top-left}: $(x_{\text{min}}+(j-1)\cdot\Delta, y_{\text{min}}+(k-1)\cdot\Delta)$
+    \item \textbf{Top-right}: $(x_{\text{min}}+j\cdot\Delta, y_{\text{min}}+(k-1)\cdot\Delta)$
+    \item \textbf{Bottom-right}:$(x_{\text{min}}+j\cdot\Delta, y_{\text{min}}+k\cdot\Delta)$
+    \item \textbf{Bottom-left}: $(x_{\text{min}}+(j-1)\cdot\Delta, y_{\text{min}}+k\cdot\Delta)$
+\end{itemize}
+
+\subsection{Value of a raster cell and polygon}
+
+Each raster cell is associated with a value, e.g. for a weather raster, a cell would store values of temperature and precipitation; for a population count raster, each cell would store a value of population count. This property is true for a polygon as well. Hence, the value of a raster cell is still associated to its geometric representation (defined in \ref{sect:raster-cell-geom}). Given a raster cell $R_i$ and a polygon $P$, we define $\nu$ as a function that provides the value associated to them as:
+
+\begin{equation*}
+    V_{R_i} = \nu(R_i) = \nu(\gamma(R_i))
+\end{equation*}
+and
+\begin{equation*}
+    V_P = \nu(P)
+\end{equation*}
